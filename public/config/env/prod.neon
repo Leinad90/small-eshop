@@ -1,3 +1,0 @@
-# Production Config
-includes:
-	- base.neon
