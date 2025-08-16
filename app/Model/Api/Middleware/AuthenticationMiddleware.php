@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace App\Model\Api\Middleware;
 
@@ -19,6 +19,30 @@ class AuthenticationMiddleware implements IMiddleware
 	public function __construct(IAuthenticator $authenticator)
 	{
 		$this->authenticator = $authenticator;
+	}
+
+	protected function denied(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	{
+		$response->getBody()->write(Json::encode([
+			'status' => 'error',
+			'message' => 'Client authentication failed',
+			'code' => 401,
+		]));
+
+		return $response
+			->withHeader('Content-Type', 'application/json')
+			->withStatus(401);
+	}
+
+	protected function isWhitelisted(ServerRequestInterface $request): bool
+	{
+		foreach (self::WHITELIST_PATHS as $whitelist) {
+			if (str_starts_with($request->getUri()->getPath(), $whitelist)) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -43,30 +67,6 @@ class AuthenticationMiddleware implements IMiddleware
 
 		// Pass to next middleware
 		return $next($request, $response);
-	}
-
-	protected function isWhitelisted(ServerRequestInterface $request): bool
-	{
-		foreach (self::WHITELIST_PATHS as $whitelist) {
-			if (str_starts_with($request->getUri()->getPath(), $whitelist)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	protected function denied(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
-	{
-		$response->getBody()->write(Json::encode([
-			'status' => 'error',
-			'message' => 'Client authentication failed',
-			'code' => 401,
-		]));
-
-		return $response
-			->withHeader('Content-Type', 'application/json')
-			->withStatus(401);
 	}
 
 }

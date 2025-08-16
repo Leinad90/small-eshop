@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace App\Model\Api\Dispatcher;
 
@@ -42,7 +42,7 @@ class JsonDispatcher extends ApitteJsonDispatcher
 
 			// Except ResponseInterface convert all to json
 			$response = !($result instanceof ApiResponse) ? $this->transformResponse($result, $response) : $result;
-		} catch (ClientErrorException|ServerErrorException $e) {
+		} catch (ClientErrorException | ServerErrorException $e) {
 			$data = [];
 
 			if ($e->getMessage() !== '') {

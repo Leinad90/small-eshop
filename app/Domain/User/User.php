@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace App\Domain\User;
 
@@ -8,6 +8,7 @@ use App\Model\Database\Entity\TId;
 use App\Model\Database\Entity\TUpdatedAt;
 use App\Model\Exception\Logic\InvalidArgumentException;
 use App\Model\Utils\DateTime;
+use Doctrine\ORM\Mapping as ORM;
 use Nette\Utils\Random;
 
 /**

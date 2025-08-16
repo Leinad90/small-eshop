@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace App\Domain\Api\Facade;
 
@@ -14,14 +14,6 @@ final class UsersFacade
 
 	public function __construct(private EntityManagerDecorator $em)
 	{
-	}
-
-	/**
-	 * @return UserResDto[]
-	 */
-	public function findAll(int $limit = 10, int $offset = 0): array
-	{
-		return $this->findBy([], ['id' => 'ASC'], $limit, $offset);
 	}
 
 	/**
@@ -41,9 +33,12 @@ final class UsersFacade
 		return $result;
 	}
 
-	public function findOne(int $id): UserResDto
+	/**
+	 * @return UserResDto[]
+	 */
+	public function findAll(int $limit = 10, int $offset = 0): array
 	{
-		return $this->findOneBy(['id' => $id]);
+		return $this->findBy([], ['id' => 'ASC'], $limit, $offset);
 	}
 
 	/**
@@ -59,6 +54,11 @@ final class UsersFacade
 		}
 
 		return UserResDto::from($entity);
+	}
+
+	public function findOne(int $id): UserResDto
+	{
+		return $this->findOneBy(['id' => $id]);
 	}
 
 	public function create(CreateUserReqDto $dto): User

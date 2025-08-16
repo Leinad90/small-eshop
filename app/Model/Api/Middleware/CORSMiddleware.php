@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php declare(strict_types = 1);
 
 namespace App\Model\Api\Middleware;
 
@@ -8,6 +8,15 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class CORSMiddleware implements IMiddleware
 {
+
+	private function decorate(ResponseInterface $response): ResponseInterface
+	{
+		return $response
+			->withHeader('Access-Control-Allow-Origin', '*')
+			->withHeader('Access-Control-Allow-Credentials', 'true')
+			->withHeader('Access-Control-Allow-Methods', '*')
+			->withHeader('Access-Control-Allow-Headers', '*');
+	}
 
 	/**
 	 * Add CORS headers
@@ -22,15 +31,6 @@ class CORSMiddleware implements IMiddleware
 		$response = $next($request, $response);
 
 		return $this->decorate($response);
-	}
-
-	private function decorate(ResponseInterface $response): ResponseInterface
-	{
-		return $response
-			->withHeader('Access-Control-Allow-Origin', '*')
-			->withHeader('Access-Control-Allow-Credentials', 'true')
-			->withHeader('Access-Control-Allow-Methods', '*')
-			->withHeader('Access-Control-Allow-Headers', '*');
 	}
 
 }
