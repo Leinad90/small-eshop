@@ -1,0 +1,34 @@
+services:
+  app:
+    image: php:apache
+    working_dir: /public
+    volumes:
+      - ./public:/var/www/html/
+    pid: "host"
+    depends_on:
+      - adminer
+    ports:
+      - "81:80"
+
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: db
+      MARIADB_USER: usr
+      MARIADB_PASSWORD: pass
+    volumes:
+      - mariadb:/var/lib/mysql
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  mariadb:
+    driver: local
