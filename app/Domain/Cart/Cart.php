@@ -8,6 +8,7 @@ use App\Model\Database\Entity\TId;
 use App\Model\Database\Entity\TUpdatedAt;
 use App\Model\Utils\DateTime;
 use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Nette\Utils\Random;
 
@@ -24,12 +25,12 @@ class Cart extends AbstractEntity
 	use TUpdatedAt;
 
 	/**
-	 * @var ArrayCollection<CartItem> $cartItems
+	 * @var Collection<CartItem> $cartItems
 	 */
 	/**
 	 * @ORM\OneToMany(targetEntity="CartItem", mappedBy="cart", cascade={"persist", "remove"})
 	 */
-	public ArrayCollection $cartItems;
+	public Collection $cartItems;
 
 	public function __construct() {
 		$this->cartItems = new ArrayCollection();

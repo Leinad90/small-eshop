@@ -6,6 +6,7 @@ use Apitte\Core\Annotation\Controller as Apitte;
 use Apitte\Core\Http\ApiRequest;
 use Apitte\Core\Http\ApiResponse;
 use App\Domain\Api\Response\CartContentDto;
+use App\Domain\Api\Response\ErrorDto;
 use App\Domain\Cart\Cart;
 use App\Domain\Cart\CartRepository;
 use App\Model\Database\Repository\AbstractRepository;
@@ -50,16 +51,24 @@ use Psr\Http\Message\ResponseInterface;
 	  * @Apitte\Path("/{id}")
 	  * @Apitte\Method("GET")
 	  */
-	 public function get(ApiRequest $request, ApiResponse $response, int $id): ResponseInterface
+	 public function get(ApiRequest $request, ApiResponse $response): ResponseInterface
 	 {
+		 $id = $request->getParameter("id");
+		 $content = $this->getCart((int)$id);
+		 if($content===null) {
+			 return $response->withStatus(400,"Invalid cart id")->writeJsonObject(new ErrorDto("Cart id not found"));
+		 }
 		return $response->writeJsonBody(
-			(array)$this->getCart($id)
+			(array)$this->getCart((int)$id)
 		);
 	 }
 
-	 private function getCart(int $id): CartContentDto
+	 private function getCart(int $id): ?CartContentDto
 	 {
 		 $cart = $this->entityManager->getRepository(Cart::class)->find($id);
+		 if($cart===null) {
+			 return null;
+		 }
 		$response = CartContentDto::from($cart);
 		return $response;
 	 }
