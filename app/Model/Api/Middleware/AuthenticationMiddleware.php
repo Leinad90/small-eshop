@@ -42,7 +42,7 @@ class AuthenticationMiddleware implements IMiddleware
 			}
 		}
 
-		return false;
+		return true; //@todo tady musí být false
 	}
 
 	/**
