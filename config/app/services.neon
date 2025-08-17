@@ -3,6 +3,7 @@
 services:
 	# Domain =================
 	- App\Domain\Api\Facade\UsersFacade
+	#- App\Domain\Cart\CartRepository
 
 	## Serialize =============
 	symfony.serializer.serializer:

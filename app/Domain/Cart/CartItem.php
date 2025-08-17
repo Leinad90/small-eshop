@@ -46,4 +46,9 @@ class CartItem extends AbstractEntity
 		return $this->quantity * $this->product->price;
 	}
 
+	public function increaseQuantity(int $increment): void
+	{
+		$this->quantity += $increment;
+	}
+
 }

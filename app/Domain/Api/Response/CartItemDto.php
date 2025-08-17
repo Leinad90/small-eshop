@@ -10,7 +10,7 @@ use DateTimeInterface;
 final class CartItemDto
 {
 
-	public int $id;
+	public ProductDto $product;
 
 	public int $quantity;
 
@@ -19,7 +19,7 @@ final class CartItemDto
 	public static function from(CartItem $cartItem): static
 	{
 		$clone = new static();
-		$clone->id = $cartItem->getId();
+		$clone->product = ProductDto::from($cartItem->product);
 		$clone->quantity = $cartItem->quantity;
 		$clone->total = $cartItem->getTotal();
 

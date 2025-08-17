@@ -13,7 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Nette\Utils\Random;
 
 /**
- * @ORM\Entity()
+ * @ORM\Entity(repositoryClass=CartRepository::class)
  * @ORM\Table(name="`Cart`")
  * @ORM\HasLifecycleCallbacks
  */

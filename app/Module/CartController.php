@@ -2,16 +2,19 @@
 
 namespace App\Module;
 
-use Apitte\Core\Annotation\Controller as Apitte;
 use Apitte\Core\Http\ApiRequest;
 use Apitte\Core\Http\ApiResponse;
+use App\Domain\Api\Request\AddProductToCartDto;
+use App\Domain\Cart\addToCardException;
+use App\Domain\Cart\CartRepository;
 use App\Domain\Api\Response\CartContentDto;
 use App\Domain\Api\Response\ErrorDto;
 use App\Domain\Cart\Cart;
-use App\Domain\Cart\CartRepository;
-use App\Model\Database\Repository\AbstractRepository;
+use App\Domain\User\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Http\Message\ResponseInterface;
+use Apitte\Core\Annotation\Controller as Apitte;
+
 
 /**
  * @Apitte\Path("/cart")
@@ -23,7 +26,6 @@ use Psr\Http\Message\ResponseInterface;
 	public function __construct(
 		private EntityManagerInterface $entityManager
 	) {
-
 	}
 
 	 /**
@@ -38,10 +40,11 @@ use Psr\Http\Message\ResponseInterface;
 		$cart = new Cart();
 		 $this->entityManager->persist($cart);
 		 $this->entityManager->flush();
-		$id = $cart->getId();
-		 return $response->writeJsonBody(
-			 (array)$this->getCart($id)
-		 );
+		$cartContent = $this->getCart($cart->getId());
+		if($cartContent===null) {
+			return $response->withStatus(500,"Internal server error")->writeJsonObject(new ErrorDto("Internal server error"));
+		}
+		 return $response->writeJsonBody((array)$cartContent);
 	 }
 
 	 /**
@@ -63,7 +66,31 @@ use Psr\Http\Message\ResponseInterface;
 		);
 	 }
 
-	 private function getCart(int $id): ?CartContentDto
+
+	 /**
+	  * @Apitte\OpenApi("
+	  *   summary: Add product to cart
+	  * ")
+	  * @Apitte\Path("/add")
+	  * @Apitte\Method("POST")
+	  * @Apitte\RequestBody(entity=AddProductToCartDto::class, required=false, validation=true)
+	  */
+	 public function add(ApiRequest $request, ApiResponse $response): ResponseInterface
+	 {
+		 $body = $request->getParsedBody();
+		 $cartRepository= new CartRepository($this->entityManager, $this->entityManager->getClassMetadata(Cart::class));
+		 try {
+		 	$cartItem =$cartRepository->addItemToCart($body->cartId,$body->sku,$body->quantity);
+		 } catch (addToCardException $e) {
+			 return $response->withStatus(400,"Not found")->writeJsonObject(new ErrorDto($e->getMessage()));
+		 }
+		 $this->entityManager->flush();
+		 return $response->writeJsonBody(
+			 (array)$this->getCart($body->cartId)
+		 );
+	 }
+
+	 private function getCart(int|string $id): ?CartContentDto
 	 {
 		 $cart = $this->entityManager->getRepository(Cart::class)->find($id);
 		 if($cart===null) {
