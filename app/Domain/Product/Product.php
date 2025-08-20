@@ -40,4 +40,18 @@ class Product extends AbstractEntity
 	 */
 	public ?string $description;
 
+	public function __construct(string $sku, string $name, float $price, ?string $description = null)
+	{
+		$this->sku = $sku;
+		$this->name = $name;
+		$this->price = $price;
+		if($description!==null) {
+			$description = trim($description);
+			if(strlen($description)==0) {
+				$description=null;
+			}
+		}
+		$this->description = $description;
+	}
+
 }
