@@ -51,4 +51,9 @@ class CartItem extends AbstractEntity
 		$this->quantity += $increment;
 	}
 
+	public function decreaseQuantity(int $decrement): void
+	{
+		$this->quantity -= $decrement;
+	}
+
 }

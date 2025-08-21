@@ -8,6 +8,7 @@ use App\Model\Database\Entity\TId;
 use App\Model\Database\Entity\TUpdatedAt;
 use App\Model\Exception\Logic\InvalidArgumentException;
 use App\Model\Utils\DateTime;
+use App\Model\Utils\Strings;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -45,13 +46,7 @@ class Product extends AbstractEntity
 		$this->sku = $sku;
 		$this->name = $name;
 		$this->price = $price;
-		if($description!==null) {
-			$description = trim($description);
-			if(strlen($description)==0) {
-				$description=null;
-			}
-		}
-		$this->description = $description;
+		$this->description = Strings::trimOrNull($description);
 	}
 
 }

@@ -21,6 +21,36 @@ class CartRepository extends AbstractRepository
 	 */
 	public function addItemToCart(string $cartId, string $sku, int $quantity): CartItem
 	{
+		$item = $this->findCartItem($cartId, $sku);
+		if ($item===null) {
+			$item = new CartItem();
+			$item->cart = $this->_em->getRepository(Cart::class)->find($cartId);
+			$item->product = $this->_em->getRepository(Product::class)->findOneBy(["sku"=>$sku]);
+			$item->quantity = 0;
+		}
+		$item->increaseQuantity($quantity);
+		$this->_em->persist($item);
+		return $item;
+	}
+
+	public function removeItemFromCart(string $cartId, string $sku, ?int $quantity = null): void {
+		$item = $this->findCartItem($cartId, $sku);
+		if ($item===null) {
+			return;
+		}
+		if($quantity) {
+			$item->decreaseQuantity($quantity);
+		}
+		if($item->quantity <=0 || !$quantity ) {
+			$this->_em->remove($item);
+			if ($item->quantity < 0) {
+				$this->removeItemFromCart($cartId, $sku, 0 - $item->quantity);
+			}
+		}
+	}
+
+	private function findCartItem(string $cartId, string $sku,): ?CartItem
+	{
 		$cart = $this->_em->getRepository(Cart::class)->find($cartId);
 		if($cart === null) {
 			throw new addToCardException("Cart not found");
@@ -29,17 +59,9 @@ class CartRepository extends AbstractRepository
 		if($product === null) {
 			throw new addToCardException("Product not found");
 		}
-		$item = $this->_em->getRepository(CartItem::class)->findOneBy(['cart' => $cart, 'product' => $product]);
-		if ($item===null) {
-			$item = new CartItem();
-			$item->cart = $cart;
-			$item->product = $product;
-			$item->quantity = 0;
-		}
-		$item->increaseQuantity($quantity);
-		$this->_em->persist($item);
-		return $item;
+		return $this->_em->getRepository(CartItem::class)->findOneBy(['cart' => $cart, 'product' => $product]);
 	}
+
 
 }
 

@@ -3,9 +3,6 @@
 namespace Database\Fixtures;
 
 use App\Domain\Product\Product;
-use App\Domain\User\User;
-use App\Model\Fixtures\ReflectionLoader;
-use App\Model\Security\Passwords;
 use Doctrine\Persistence\ObjectManager;
 
 /**
