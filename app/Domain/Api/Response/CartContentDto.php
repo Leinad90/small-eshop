@@ -10,8 +10,8 @@ final class CartContentDto implements JsonSerializable
 
 	public int $id;
 
-	/** @var CartItemDto[] $§items */
-	public array $items;
+	/** @var CartItemDto[] $items */
+	public array $items = [];
 
 	public readonly int $item_count;
 
