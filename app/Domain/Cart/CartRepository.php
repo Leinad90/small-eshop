@@ -4,8 +4,6 @@ namespace App\Domain\Cart;
 
 use App\Domain\Product\Product;
 use App\Model\Database\Repository\AbstractRepository;
-use Doctrine\ORM\EntityRepository;
-use InvalidArgumentException;
 
 /**
  * @method Cart|NULL find($id, ?int $lockMode = NULL, ?int $lockVersion = NULL)
@@ -16,32 +14,38 @@ use InvalidArgumentException;
  */
 class CartRepository extends AbstractRepository
 {
+
 	/**
-	 * @throws addToCardException
+	 * @throws AddToCartException
 	 */
 	public function addItemToCart(string $cartId, string $sku, int $quantity): CartItem
 	{
 		$item = $this->findCartItem($cartId, $sku);
-		if ($item===null) {
+		if ($item === null) {
 			$item = new CartItem();
 			$item->cart = $this->_em->getRepository(Cart::class)->find($cartId);
-			$item->product = $this->_em->getRepository(Product::class)->findOneBy(["sku"=>$sku]);
+			$item->product = $this->_em->getRepository(Product::class)->findOneBy(['sku' => $sku]);
 			$item->quantity = 0;
 		}
+
 		$item->increaseQuantity($quantity);
 		$this->_em->persist($item);
+
 		return $item;
 	}
 
-	public function removeItemFromCart(string $cartId, string $sku, ?int $quantity = null): void {
+	public function removeItemFromCart(string $cartId, string $sku, ?int $quantity = null): void
+	{
 		$item = $this->findCartItem($cartId, $sku);
-		if ($item===null) {
+		if ($item === null) {
 			return;
 		}
-		if($quantity) {
+
+		if ($quantity) {
 			$item->decreaseQuantity($quantity);
 		}
-		if($item->quantity <=0 || !$quantity ) {
+
+		if ($item->quantity <= 0 || !$quantity) {
 			$this->_em->remove($item);
 		}
 	}
@@ -49,19 +53,16 @@ class CartRepository extends AbstractRepository
 	private function findCartItem(string $cartId, string $sku,): ?CartItem
 	{
 		$cart = $this->_em->getRepository(Cart::class)->find($cartId);
-		if($cart === null) {
-			throw new addToCardException("Cart not found");
+		if ($cart === null) {
+			throw new AddToCartException('Cart not found');
 		}
-		$product = $this->_em->getRepository(Product::class)->findOneBy(["sku"=>$sku]);
-		if($product === null) {
-			throw new addToCardException("Product not found");
+
+		$product = $this->_em->getRepository(Product::class)->findOneBy(['sku' => $sku]);
+		if ($product === null) {
+			throw new AddToCartException('Product not found');
 		}
+
 		return $this->_em->getRepository(CartItem::class)->findOneBy(['cart' => $cart, 'product' => $product]);
 	}
-
-
-}
-
-class addToCardException extends InvalidArgumentException {
 
 }

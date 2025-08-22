@@ -3,8 +3,6 @@
 namespace App\Domain\Api\Response;
 
 use App\Domain\Cart\Cart;
-use App\Domain\User\User;
-use DateTimeInterface;
 use JsonSerializable;
 
 final class CartContentDto implements JsonSerializable
@@ -31,11 +29,14 @@ final class CartContentDto implements JsonSerializable
 		foreach ($cart->cartItems as $cartItem) {
 			$clone->items[] = CartItemDto::from($cartItem);
 		}
+
 		return $clone;
 	}
 
+	/** @return mixed[] */
 	public function jsonSerialize(): array
 	{
-		return (array)$this;
+		return (array) $this;
 	}
+
 }

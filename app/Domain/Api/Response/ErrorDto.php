@@ -2,9 +2,6 @@
 
 namespace App\Domain\Api\Response;
 
-use App\Domain\Cart\Cart;
-use App\Domain\User\User;
-use DateTimeInterface;
 use JsonSerializable;
 
 final class ErrorDto implements JsonSerializable
@@ -12,11 +9,14 @@ final class ErrorDto implements JsonSerializable
 
 	public function __construct(public string $error)
 	{
-
 	}
 
+	/**
+	 * @return array{error: string}
+	 */
 	public function jsonSerialize(): array
 	{
-		return (array)$this;
+		return (array) $this;
 	}
+
 }

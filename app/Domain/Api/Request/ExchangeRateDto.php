@@ -8,12 +8,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 final class ExchangeRateDto
 {
 
-	/**
-	 * @Assert\NotBlank
-	 */
+	/** @Assert\NotBlank */
 	public DateTime $date;
 
-	public ?string $lang=null;
-
+	public ?string $lang = null;
 
 }

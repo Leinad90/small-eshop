@@ -7,9 +7,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 final class AddProductToCartDto
 {
 
-	/**
-	 * @Assert\NotBlank
-	 */
+	/** @Assert\NotBlank */
 	public string $cartId;
 
 	/** @Assert\NotBlank */

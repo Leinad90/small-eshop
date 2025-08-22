@@ -2,10 +2,7 @@
 
 namespace App\Domain\Api\Response;
 
-use App\Domain\Cart\Cart;
 use App\Domain\Product\Product;
-use App\Domain\User\User;
-use DateTimeInterface;
 use JsonSerializable;
 
 final class ProductDto implements JsonSerializable
@@ -13,7 +10,7 @@ final class ProductDto implements JsonSerializable
 
 	public string $sku;
 
-	public string $name="";
+	public string $name = '';
 
 	public float $price;
 
@@ -28,11 +25,14 @@ final class ProductDto implements JsonSerializable
 		$clone->name = $product->name;
 		$clone->price = $product->price;
 		$clone->description = $product->description;
+
 		return $clone;
 	}
 
+	/** @return mixed[] */
 	public function jsonSerialize(): array
 	{
-		return (array)$this;
+		return (array) $this;
 	}
+
 }

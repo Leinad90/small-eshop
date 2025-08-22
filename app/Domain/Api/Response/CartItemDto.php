@@ -2,10 +2,7 @@
 
 namespace App\Domain\Api\Response;
 
-use App\Domain\Cart\Cart;
 use App\Domain\Cart\CartItem;
-use App\Domain\User\User;
-use DateTimeInterface;
 
 final class CartItemDto
 {

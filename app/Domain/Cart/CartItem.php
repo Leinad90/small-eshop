@@ -7,10 +7,7 @@ use App\Model\Database\Entity\AbstractEntity;
 use App\Model\Database\Entity\TCreatedAt;
 use App\Model\Database\Entity\TId;
 use App\Model\Database\Entity\TUpdatedAt;
-use App\Model\Exception\Logic\InvalidArgumentException;
-use App\Model\Utils\DateTime;
 use Doctrine\ORM\Mapping as ORM;
-use Nette\Utils\Random;
 
 /**
  * @ORM\Entity()
@@ -25,8 +22,8 @@ class CartItem extends AbstractEntity
 	use TUpdatedAt;
 
 	/**
- 	* @ORM\JoinColumn(name="cart_id", nullable=false, onDelete="CASCADE")
-	* @ORM\ManyToOne(targetEntity=Cart::class, inversedBy= "cartItems")
+	 * @ORM\JoinColumn(name="cart_id", nullable=false, onDelete="CASCADE")
+	 * @ORM\ManyToOne(targetEntity=Cart::class, inversedBy= "cartItems")
 	 */
 	public Cart $cart;
 
@@ -36,9 +33,7 @@ class CartItem extends AbstractEntity
 	 */
 	public Product $product;
 
-	/**
-	 * @ORM\Column(type= "integer", nullable= false)
-	 */
+	/** @ORM\Column(type= "integer", nullable= false) */
 	public int $quantity;
 
 	public function getTotal(): float
