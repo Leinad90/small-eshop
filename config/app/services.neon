@@ -3,7 +3,8 @@
 services:
 	# Domain =================
 	- App\Domain\Api\Facade\UsersFacade
-	#- App\Domain\Cart\CartRepository
+	- App\Model\Download\ExchangeRare\ExchangeRate("https://api.cnb.cz/cnbapi/exrates/daily")
+	- GuzzleHttp\Psr7\HttpFactory
 
 	## Serialize =============
 	symfony.serializer.serializer:

@@ -43,9 +43,6 @@ class CartRepository extends AbstractRepository
 		}
 		if($item->quantity <=0 || !$quantity ) {
 			$this->_em->remove($item);
-			if ($item->quantity < 0) {
-				$this->removeItemFromCart($cartId, $sku, 0 - $item->quantity);
-			}
 		}
 	}
 
