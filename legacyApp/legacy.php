@@ -19,13 +19,14 @@ class OrderManager
         }
 
         $order['customer_id'] = $customer->id;
-        $order['items'] = list();
+        $order['items'] = [];
 
         $total = 0;
         foreach ($orderData['items'] as $item) {
             $product = $this->findBySku($item['sku']);
             if (!$product) {
                 // Ignore missing products silently
+				/** @todo Why ignore, why they are here */
                 continue;
             }
 
@@ -42,7 +43,7 @@ class OrderManager
         $order['total'] = $total;
         $order['created_at'] = date('Y-m-d H:i:s');
 
-        fwrite(fopen('orders.json', 'a+'), json_encode($order) . "\n");
+		file::saveJson('orders.json',$order,FILE_APPEND);
 
         $message = 'Thank you for your order!\n\nTotal: $total\n\nWe will deliver to: $customer->address';
         $mailer->send($customer->email, "Order confirmation", $message);
@@ -52,7 +53,7 @@ class OrderManager
 
     private function findBySku($sku)
     {
-        $products = json_decode(file_get_contents('products.json'), true);
+		$products = file::readJson('products.json');
         foreach ($products as $p) {
             if ($p['sku'] === $sku) {
                 $product = new stdClass();
@@ -87,24 +88,25 @@ class CustomerRepository
 
     public function save($customer)
     {
-        $customers = json_decode(file_get_contents('customers.json'), true);
-        $customer->id = count($customers) + 1;
+		$customers = file::readJson('customers.json');
+        $customer->id = uniqid((string)count($customers));
         $customers[] = [
             'id' => $customer->id,
             'name' => $customer->name,
             'email' => $customer->email,
             'address' => $customer->address,
         ];
-        file_put_contents('customers.json', json_encode($customers));
+		file::saveJson('customers.json', $customer);
     }
 }
 
 class Mailer
 {
-    public function send($to, $subject, $message)
+    public function send(string $to, string $subject, string $message)
     {
         // Simulate sending email
-        file_put_contents('emails.log', "[" . date('Y-m-d H:i:s') . "] To: $to\nSubject: $subject\n$message\n\n", FILE_APPEND);
+		$data = "[" . date('Y-m-d H:i:s') . "] To: $to\nSubject: $subject\n$message\n\n";
+		file::save('email.log', $data, FILE_APPEND);
     }
 }
 
@@ -116,4 +118,37 @@ class Customer
     public $address;
 }
 
-?>
+class file
+{
+	public static function save(string $filePath, string $content, int $flag = 0): void
+	{
+		$written = file_put_contents($filePath,$content,$flag|LOCK_EX );
+		if($written === false){
+			throw new Exception("Unable to write to $filePath");
+		}
+		if($written < strlen($content)) {
+			throw new Exception("Unable to write to $filePath");
+		}
+	}
+	public static function saveJson(string $filePath, mixed $content, int $fileFlags = 0, int $jsonFlags = 0): void
+	{
+		$data = json_encode($content,$jsonFlags|JSON_THROW_ON_ERROR);
+		static::save($filePath, $data, $fileFlags);
+	}
+
+	public static function read(string $filePath): string
+	{
+		$data = file_get_contents($filePath);
+		if($data===false) {
+			throw new Exception("Unable to read from $filePath");
+		}
+		return $data;
+	}
+
+	public static function readJson(string $filePath, int $jsonFlags = 0): mixed
+	{
+		$data = static::read($filePath);
+		$json = json_decode($data,true, flags: JSON_THROW_ON_ERROR|$jsonFlags);
+		return $json;
+	}
+}
