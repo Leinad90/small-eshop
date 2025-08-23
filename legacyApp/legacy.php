@@ -3,15 +3,21 @@
 declare(strict_types=1);
 class OrderManager
 {
-    public function processOrder($orderData)
+
+	public function __construct(
+		private readonly CustomerRepository $CustomerRepository,
+		private readonly Mailer $Mailer,
+		private readonly OrderRepository $OrderRepository,
+	) {
+
+	}
+    public function processOrder(array $orderData)
     {
-        $customerRepo = new CustomerRepository();
-        $mailer = new Mailer();
         $order = [];
 
-        $customer = $customerRepo->findByEmail($orderData['email']);
+        $customer = $this->CustomerRepository->findByEmail($orderData['email']);
 		/**
-		 * @todo - relly use old customer data? (DWhat about to do customer update)
+		 * @todo - relly use old customer data? (What about to do customer update)
 		 */
         if (!$customer) {
             $customer = new Customer();
@@ -19,9 +25,10 @@ class OrderManager
             $customer->name = $orderData['name'];
             $customer->email = $orderData['email'];
             $customer->address = $orderData['address'];
-            $customerRepo->save($customer);
+            $this->CustomerRepository->save($customer);
         }
 
+		$order['id'] = uniqid();
         $order['customer_id'] = $customer->id;
         $order['items'] = [];
 
@@ -47,10 +54,10 @@ class OrderManager
         $order['total'] = $total;
         $order['created_at'] = date('Y-m-d H:i:s');
 
-		file::saveJson('orders.json',$order,FILE_APPEND);
+		$this->OrderRepository->save($order);
 
 		$message = sprintf("Thank you for your order!\n\nTotal: %f\n\nWe will deliver to: %s",$total,$customer->address);
-        $mailer->send($customer->email, "Order confirmation", $message);
+        $this->Mailer->send($customer->email, "Order confirmation", $message);
 
         return true;
     }
@@ -59,16 +66,28 @@ class OrderManager
     {
 		$products = file::readJson('products.json');
         foreach ($products as $p) {
-            if ($p['sku'] === $sku) {
-                $product = new stdClass();
-                $product->sku = $p['sku'];
-                $product->price = $p['price'];
-                return $product;
+            if ($p->sku === $sku) {
+               return $p;
             }
         }
 
         return null;
     }
+}
+
+class OrderRepository
+{
+	public function save(array $orderData) {
+		$fp = fopen('orders.json', "c+");
+		if(flock($fp, LOCK_EX)) {
+			$orders = file::readJson('orders.json');
+			$orders[] = $orderData;
+			file::saveJson('orders.json', $orders, FILE_APPEND);
+		} else {
+			throw new Exception("Could not obtain lock");
+		}
+		flock($fp,LOCK_UN);
+	}
 }
 
 class CustomerRepository
@@ -92,7 +111,8 @@ class CustomerRepository
 
 	/**
 	 * @throws JsonException
-	 */	public function save($customer)
+	 */
+	public function save($customer)
     {
 		$customers = file::readJson('customers.json');
         $customer->id = uniqid((string)count($customers)); /** */
@@ -102,13 +122,13 @@ class CustomerRepository
             'email' => $customer->email,
             'address' => $customer->address,
         ];
-		file::saveJson('customers.json', $customer);
+		file::saveJson('customers.json', $customers);
     }
 }
 
 class Mailer
 {
-    public function send(string $to, string $subject, string $message)
+    public function send(string $to, string $subject, string $message): void
     {
         // Simulate sending email
 		$data = "[" . date('Y-m-d H:i:s') . "] To: $to\nSubject: $subject\n$message\n\n";
@@ -154,7 +174,7 @@ class file
 	public static function readJson(string $filePath, int $jsonFlags = 0): mixed
 	{
 		$data = static::read($filePath);
-		$json = json_decode($data,true, flags: JSON_THROW_ON_ERROR|$jsonFlags);
+		$json = json_decode($data,false, flags: JSON_THROW_ON_ERROR|$jsonFlags);
 		return $json;
 	}
 }
