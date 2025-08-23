@@ -10,8 +10,12 @@ class OrderManager
         $order = [];
 
         $customer = $customerRepo->findByEmail($orderData['email']);
+		/**
+		 * @todo - relly use old customer data? (DWhat about to do customer update)
+		 */
         if (!$customer) {
             $customer = new Customer();
+		/** @todo maybe if may } end here */
             $customer->name = $orderData['name'];
             $customer->email = $orderData['email'];
             $customer->address = $orderData['address'];
@@ -45,13 +49,13 @@ class OrderManager
 
 		file::saveJson('orders.json',$order,FILE_APPEND);
 
-        $message = 'Thank you for your order!\n\nTotal: $total\n\nWe will deliver to: $customer->address';
+		$message = sprintf("Thank you for your order!\n\nTotal: %f\n\nWe will deliver to: %s",$total,$customer->address);
         $mailer->send($customer->email, "Order confirmation", $message);
 
         return true;
     }
 
-    private function findBySku($sku)
+    private function findBySku(string $sku)
     {
 		$products = file::readJson('products.json');
         foreach ($products as $p) {
@@ -69,16 +73,16 @@ class OrderManager
 
 class CustomerRepository
 {
-    public function findByEmail($email)
+    public function findByEmail(string $email)
     {
-        $customers = json_decode(file_get_contents('customers.json'), true);
-        foreach ($customers as $c) {
-            if ($c['email'] === $email) {
-                $customer = new stdClass();
-                $customer->id = $c['id'];
-                $customer->name = $c['name'];
-                $customer->email = $c['email'];
-                $customer->address = $c['address'];
+		$customers = file::readJson('customers.json');
+       foreach ($customers as $c) {
+            if ($c->email === $email) {
+                $customer = new Customer();
+                $customer->id = $c->id;
+                $customer->name = $c->name;
+                $customer->email = $c->email;
+                $customer->address = $c->address;
                 return $customer;
             }
         }
@@ -86,10 +90,12 @@ class CustomerRepository
         return null;
     }
 
-    public function save($customer)
+	/**
+	 * @throws JsonException
+	 */	public function save($customer)
     {
 		$customers = file::readJson('customers.json');
-        $customer->id = uniqid((string)count($customers));
+        $customer->id = uniqid((string)count($customers)); /** */
         $customers[] = [
             'id' => $customer->id,
             'name' => $customer->name,
