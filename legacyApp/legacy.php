@@ -28,10 +28,9 @@ class OrderManager
             $this->CustomerRepository->save($customer);
         }
 
-		$order['id'] = uniqid();
-        $order['customer_id'] = $customer->id;
-        $order['items'] = [];
-
+		$order = new Order();
+		$order->customerId = $customer->id;
+		$items = [];
         $total = 0;
         foreach ($orderData['items'] as $item) {
             $product = $this->findBySku($item['sku']);
@@ -41,18 +40,16 @@ class OrderManager
                 continue;
             }
 
-            $line = [];
-            $line['sku'] = $product->sku;
-            $line['price'] = $product->price;
-            $line['quantity'] = $item['quantity'];
-            $line['total'] = $product->price * $item['quantity'];
-            $order['items'][] = $line;
+            $line = new OrderItem();
+			$line->sku = $item['sku'];
+            $line->price = $product->price;
+            $line->quantity = $item->quantity;
+			$order->items[] = $line;
 
             $total += $line['total'];
         }
 
-        $order['total'] = $total;
-        $order['created_at'] = date('Y-m-d H:i:s');
+        $order->createdAt = new DateTime();
 
 		$this->OrderRepository->save($order);
 
@@ -77,10 +74,10 @@ class OrderManager
 
 class OrderRepository
 {
-	public function save(array $orderData) {
-		$fp = fopen('orders.json', "c+");
+	public function save(Order $orderData) {
+		$fp = fopen('orders.json', "a");
 		if(flock($fp, LOCK_EX)) {
-			$orders = file::readJson('orders.json');
+			$orders = file::readJson('orders.json',true);
 			$orders[] = $orderData;
 			file::saveJson('orders.json', $orders, FILE_APPEND);
 		} else {
@@ -92,7 +89,7 @@ class OrderRepository
 
 class CustomerRepository
 {
-    public function findByEmail(string $email)
+    public function findByEmail(string $email): ?Customer
     {
 		$customers = file::readJson('customers.json');
        foreach ($customers as $c) {
@@ -112,10 +109,10 @@ class CustomerRepository
 	/**
 	 * @throws JsonException
 	 */
-	public function save($customer)
+	public function save(Customer $customer)
     {
-		$customers = file::readJson('customers.json');
-        $customer->id = uniqid((string)count($customers)); /** */
+		$customers = file::readJson('customers.json',true);
+        $customer['id'] = uniqid((string)count($customers)); /** */
         $customers[] = [
             'id' => $customer->id,
             'name' => $customer->name,
@@ -142,6 +139,38 @@ class Customer
     public $name;
     public $email;
     public $address;
+}
+
+class Order
+{
+	public string $id;
+	public string $customerId;
+
+	/** @var OrderItem[] */
+	public array $items = [];
+	public DateTime $createdAt;
+
+	public function getTotal(): float
+	{
+		$total = 0;
+		foreach ($this->items as $item) {
+			$total += $item->getTotal();
+		}
+		return $total;
+	}
+
+}
+
+class OrderItem
+{
+	public string $sku;
+	public float $quantity;
+	public float $price;
+
+	public function getTotal(): float
+	{
+		return $this->price * $this->quantity;
+	}
 }
 
 class file
@@ -171,10 +200,10 @@ class file
 		return $data;
 	}
 
-	public static function readJson(string $filePath, int $jsonFlags = 0): mixed
+	public static function readJson(string $filePath, bool $associative = false,  int $jsonFlags = 0): mixed
 	{
 		$data = static::read($filePath);
-		$json = json_decode($data,false, flags: JSON_THROW_ON_ERROR|$jsonFlags);
+		$json = json_decode($data, $associative, flags: JSON_THROW_ON_ERROR|$jsonFlags);
 		return $json;
 	}
 }
