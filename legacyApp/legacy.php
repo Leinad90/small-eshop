@@ -11,15 +11,19 @@ class OrderManager
 	) {
 
 	}
-    public function processOrder(array $orderData)
+
+	/**
+	 * @param array{name: string, email: string, address: string, items: array{sku: string, quantity: float}[] } $orderData
+	 * @return void
+	 */
+    public function processOrder(array $orderData): void
     {
-        $order = [];
 
         $customer = $this->CustomerRepository->findByEmail($orderData['email']);
 		/**
 		 * @todo - relly use old customer data? (What about to do customer update)
 		 */
-        if (!$customer) {
+        if ($customer===null) {
             $customer = new Customer();
 		/** @todo maybe if may } end here */
             $customer->name = $orderData['name'];
@@ -30,11 +34,9 @@ class OrderManager
 
 		$order = new Order();
 		$order->customerId = $customer->id;
-		$items = [];
-        $total = 0;
         foreach ($orderData['items'] as $item) {
             $product = $this->findBySku($item['sku']);
-            if (!$product) {
+            if ($product===null) {
                 // Ignore missing products silently
 				/** @todo Why ignore, why they are here */
                 continue;
@@ -43,23 +45,20 @@ class OrderManager
             $line = new OrderItem();
 			$line->sku = $item['sku'];
             $line->price = $product->price;
-            $line->quantity = $item->quantity;
+            $line->quantity = $item['quantity'];
 			$order->items[] = $line;
 
-            $total += $line['total'];
         }
 
         $order->createdAt = new DateTime();
 
 		$this->OrderRepository->save($order);
 
-		$message = sprintf("Thank you for your order!\n\nTotal: %f\n\nWe will deliver to: %s",$total,$customer->address);
+		$message = sprintf("Thank you for your order!\n\nTotal: %f\n\nWe will deliver to: %s",$order->getTotal(),$customer->address);
         $this->Mailer->send($customer->email, "Order confirmation", $message);
+	}
 
-        return true;
-    }
-
-    private function findBySku(string $sku)
+    private function findBySku(string $sku): ?stdClass
     {
 		$products = file::readJson('products.json');
         foreach ($products as $p) {
@@ -75,15 +74,7 @@ class OrderManager
 class OrderRepository
 {
 	public function save(Order $orderData) {
-		$fp = fopen('orders.json', "a");
-		if(flock($fp, LOCK_EX)) {
-			$orders = file::readJson('orders.json',true);
-			$orders[] = $orderData;
-			file::saveJson('orders.json', $orders, FILE_APPEND);
-		} else {
-			throw new Exception("Could not obtain lock");
-		}
-		flock($fp,LOCK_UN);
+		file::addJson('orders.json', $orderData);
 	}
 }
 
@@ -111,15 +102,7 @@ class CustomerRepository
 	 */
 	public function save(Customer $customer)
     {
-		$customers = file::readJson('customers.json',true);
-        $customer['id'] = uniqid((string)count($customers)); /** */
-        $customers[] = [
-            'id' => $customer->id,
-            'name' => $customer->name,
-            'email' => $customer->email,
-            'address' => $customer->address,
-        ];
-		file::saveJson('customers.json', $customers);
+		file::addJson('customers.json', $customer);
     }
 }
 
@@ -133,17 +116,15 @@ class Mailer
     }
 }
 
-class Customer
+class Customer implements ID
 {
-    public $id;
-    public $name;
-    public $email;
-    public $address;
+    public string $name;
+    public string $email;
+    public string $address;
 }
 
-class Order
+class Order implements ID
 {
-	public string $id;
 	public string $customerId;
 
 	/** @var OrderItem[] */
@@ -159,6 +140,11 @@ class Order
 		return $total;
 	}
 
+}
+
+interface ID
+{
+	public string $id;
 }
 
 class OrderItem
@@ -205,5 +191,19 @@ class file
 		$data = static::read($filePath);
 		$json = json_decode($data, $associative, flags: JSON_THROW_ON_ERROR|$jsonFlags);
 		return $json;
+	}
+
+	public static function addJson(string $filePath, ID $data, int $jsonFlags = 0): void
+	{
+		$fp = fopen($filePath, "a");
+		if(is_resource($fp) && flock($fp, LOCK_EX)) {
+			$array = static::readJson($filePath, true, $jsonFlags);
+			$data->id = uniqid((string)count($array));
+			$array[] = $data;
+			static::saveJson($filePath, $array);
+		} else {
+			throw new Exception("Could not obtain lock");
+		}
+		flock($fp, LOCK_UN);
 	}
 }
